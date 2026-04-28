@@ -288,7 +288,114 @@ client.on("messageCreate", (message) => {
         });
     }
 
+// =====================
+// 🟠 SORTEOS
+// =====================
 
+function getRareza(r) {
+    switch (r.toUpperCase()) {
+        case "L": return "<:L_orbes:1491315618836648037>";
+        case "M": return "<:M_orbes:1491315496216301678>";
+        case "H": return "<:H_orbes:1491315422232842391>";
+        case "C": return "💀";
+        default: return r;
+    }
+}
+
+const allowedRoleId = "1491196073065320458";
+const hasRole = message.member.roles.cache.has(allowedRoleId);
+const isAdmin = message.member.permissions.has("Administrator");
+
+// LIST
+if (msg.startsWith(prefix + "sorteo list")) {
+    if (sorteos.length === 0) {
+        return message.reply("❌ No hay sorteos activos.");
+    }
+
+    const grouped = {};
+    let totalOrbes = 0;
+
+    sorteos.forEach((item, index) => {
+        if (!grouped[item.user]) grouped[item.user] = [];
+        grouped[item.user].push({ ...item, id: index + 1 });
+    });
+
+    let text = "━━━━━━━━━━━━━━━\n\n";
+
+    for (const user in grouped) {
+        text += `┃ 🏆 <@${user}>\n`;
+
+        grouped[user].forEach((item) => {
+            totalOrbes += parseInt(item.cantidad);
+
+            text += `┃ ╰୨₊˚︰ [${item.id}] 🐉 **${item.dragon}** ${getRareza(item.rareza)} — **${item.cantidad}** orbes ⟣\n`;
+        });
+
+        text += "\n";
+    }
+
+    text += "━━━━━━━━━━━━━━━\n";
+    text += `📊 ***TOTAL DE ORBES***: **${totalOrbes.toLocaleString("es-ES")}**\n`;
+    text += "━━━━━━━━━━━━━━━";
+
+    const embed = new EmbedBuilder()
+        .setColor(0xffa500)
+        .setTitle("🎁 **SORTEOS ACTIVOS**")
+        .setDescription(text);
+
+    return message.channel.send({
+        embeds: [embed],
+        allowedMentions: { parse: [] },
+    });
+}
+
+// ADD
+if (msg.startsWith(prefix + "sorteo add")) {
+    if (!hasRole && !isAdmin) {
+        return message.reply("❌ No tienes permiso.");
+    }
+
+    const args = message.content.split(" ");
+    const dragon = args[2];
+    const cantidad = args[3];
+    const rareza = args[4];
+
+    if (!dragon || !cantidad || !rareza) {
+        return message.reply("❌ Usa: !sorteo add <dragon> <cantidad> <L/M/H/C>");
+    }
+
+    sorteos.push({
+        dragon,
+        cantidad,
+        rareza,
+        user: message.author.id,
+    });
+
+    fs.writeFileSync(file, JSON.stringify(sorteos, null, 2));
+
+    return message.reply(`✅ Añadido: 🐉 **${dragon}** ${getRareza(rareza)} — **${cantidad}**`);
+}
+
+// REMOVE
+if (msg.startsWith(prefix + "sorteo remove")) {
+    if (!hasRole && !isAdmin) {
+        return message.reply("❌ No tienes permiso.");
+    }
+
+    const args = msg.split(" ");
+    const id = parseInt(args[2]) - 1;
+
+    if (isNaN(id) || !sorteos[id]) {
+        return message.reply("❌ ID inválido.");
+    }
+
+    const removed = sorteos[id];
+
+    sorteos.splice(id, 1);
+    fs.writeFileSync(file, JSON.stringify(sorteos, null, 2));
+
+    return message.reply(`🗑️ Eliminado: 🐉 ${removed.dragon}`);
+}
 
 });
 
