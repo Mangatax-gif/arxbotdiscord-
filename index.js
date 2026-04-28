@@ -82,7 +82,7 @@ const foodData = {
 // =====================
 // BOT READY
 // =====================
-client.once("ready", () => {
+client.once("clientReady", () => {
     console.log(`ArxBot encendido como ${client.user.tag}`);
 
     client.user.setActivity("ArxDraCiTy", {
